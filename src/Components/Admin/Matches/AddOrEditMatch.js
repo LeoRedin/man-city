@@ -2,6 +2,8 @@ import React, { Component } from "react";
 import AdminLayout from "../../../Hoc/AdminLayout";
 import FormField from "../../Ui/FormFields";
 import { validate } from "../../Ui/misc";
+import { firebaseTeams, firebaseDB, firebaseMatches } from "../../../firebase";
+import { firebaseLooper } from "../../Ui/misc";
 
 class AddOrEditMatch extends Component {
     state = {
@@ -160,6 +162,129 @@ class AddOrEditMatch extends Component {
             }
         }
     };
+
+    updateForm(element) {
+        const newFormdata = { ...this.state.formdata };
+        const newElement = { ...newFormdata[element.id] };
+
+        newElement.value = element.event.target.value;
+
+        let validData = validate(newElement);
+        newElement.valid = validData[0];
+        newElement.validationMessage = validData[1];
+
+        newFormdata[element.id] = newElement;
+
+        this.setState({
+            formError: false,
+            formdata: newFormdata
+        });
+    }
+
+    updatefields(match, teamOptions, teams, type, matchId) {
+        const newFormData = {
+            ...this.state.formdata
+        };
+
+        for (let key in newFormData) {
+            if (match) {
+                newFormData[key].value = match[key];
+                newFormData[key].valid = true;
+            }
+            if (key === "local" || key === "away") {
+                newFormData[key].config.options = teamOptions;
+            }
+        }
+
+        this.setState({
+            matchId,
+            formType: type,
+            formdata: newFormData,
+            teams
+        });
+    }
+
+    successForm(message) {
+        this.setState({
+            formSuccess: message
+        });
+
+        setTimeout(() => {
+            this.setState({
+                formSuccess: ""
+            });
+        }, 2500);
+    }
+
+    submitForm(event) {
+        event.preventDefault();
+
+        let dataToSubmit = {};
+        let formIsValid = true;
+
+        for (let key in this.state.formdata) {
+            dataToSubmit[key] = this.state.formdata[key].value;
+            formIsValid = this.state.formdata[key].valid && formIsValid;
+        }
+
+        this.state.teams.forEach(team => {
+            if (team.shortName === dataToSubmit.local) {
+                dataToSubmit["localThmb"] = team.thmb;
+            }
+            if (team.shortName === dataToSubmit.away) {
+                dataToSubmit["awaylThmb"] = team.thmb;
+            }
+        });
+
+        if (formIsValid) {
+            const { matchId } = this.state;
+            if (this.state.formType === "Editar Partida") {
+                firebaseDB
+                    .ref(`matches/${matchId}`)
+                    .update(dataToSubmit)
+                    .then(() => {
+                        this.successForm("Dados atualizados");
+                    });
+            } else {
+                // adicionar partida
+            }
+        } else {
+            this.setState({
+                formError: true
+            });
+        }
+    }
+
+    componentDidMount() {
+        const matchId = this.props.match.params.id;
+        const getTeams = (match, type) => {
+            firebaseTeams.once("value").then(snapshot => {
+                const teams = firebaseLooper(snapshot);
+                const teamOptions = [];
+
+                snapshot.forEach(childSnapshot => {
+                    teamOptions.push({
+                        key: childSnapshot.val().shortName,
+                        value: childSnapshot.val().shortName
+                    });
+                });
+
+                this.updatefields(match, teamOptions, teams, type, matchId);
+            });
+        };
+
+        if (!matchId) {
+            // add match
+        } else {
+            firebaseDB
+                .ref(`matches/${matchId}`)
+                .once("value")
+                .then(snapshot => {
+                    const match = snapshot.val();
+                    getTeams(match, "Editar Partida");
+                });
+        }
+    }
 
     render() {
         const { formType } = this.state;
