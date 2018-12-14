@@ -149,8 +149,8 @@ class AddOrEditMatch extends Component {
                     name: "select_played",
                     type: "select",
                     options: [
-                        { key: "Sim", value: "Sim" },
-                        { key: "Não", value: "Não" }
+                        { key: "Yes", value: "Sim" },
+                        { key: "No", value: "Não" }
                     ]
                 },
                 validation: {
@@ -247,6 +247,16 @@ class AddOrEditMatch extends Component {
                     });
             } else {
                 // adicionar partida
+                firebaseMatches
+                    .push(dataToSubmit)
+                    .then(() => {
+                        this.props.history.push("/admin_partidas");
+                    })
+                    .catch(e => {
+                        this.setState({
+                            formError: true
+                        });
+                    });
             }
         } else {
             this.setState({
@@ -274,7 +284,7 @@ class AddOrEditMatch extends Component {
         };
 
         if (!matchId) {
-            // add match
+            getTeams(false, "Adicionar Partida");
         } else {
             firebaseDB
                 .ref(`matches/${matchId}`)

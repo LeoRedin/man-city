@@ -30,6 +30,12 @@ const Routes = props => {
                 />
                 <PrivateRoute
                     {...props}
+                    path="/admin_partidas/adicionar"
+                    exact
+                    component={AddOrEditMatch}
+                />
+                <PrivateRoute
+                    {...props}
                     path="/dashboard"
                     exact
                     component={Dashboard}
