@@ -11,6 +11,7 @@ import Login from "./Components/Login";
 import Dashboard from "./Components/Admin/Dashboard";
 import AdminMatches from "./Components/Admin/Matches";
 import AddOrEditMatch from "./Components/Admin/Matches/AddOrEditMatch";
+import AdminPlayers from "./Components/Admin/Players";
 
 const Routes = props => {
     return (
@@ -33,6 +34,12 @@ const Routes = props => {
                     path="/admin_partidas/adicionar"
                     exact
                     component={AddOrEditMatch}
+                />
+                <PrivateRoute
+                    {...props}
+                    path="/admin_jogadores"
+                    exact
+                    component={AdminPlayers}
                 />
                 <PrivateRoute
                     {...props}
